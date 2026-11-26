@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+  <meta name="theme-color" content="#070b16" />
+  <meta
+    name="description"
+    content="Damara Mobile Tracker — prototipe pelacak log kerja teknisi PT Damara Rekayasa Solusi."
+  />
+  <title>Damara Mobile Tracker — PT Damara Rekayasa Solusi</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#log-form">Lewati ke formulir</a>
+
+  <div class="app-shell">
+    <!-- ================= HEADER / SESI ================= -->
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true">DR</span>
+        <div class="brand__text">
+          <p class="brand__company">PT Damara Rekayasa Solusi</p>
+          <h1 class="brand__title">Damara Mobile Tracker</h1>
+        </div>
+      </div>
+
+      <div class="session">
+        <div class="session__chip" id="session-chip" data-state="idle">
+          <span class="session__dot" aria-hidden="true"></span>
+          <span class="session__label" id="session-label">Belum ada sesi aktif</span>
+        </div>
+        <button
+          type="button"
+          class="btn btn--ghost btn--tiny"
+          id="end-session"
+          hidden
+        >
+          Akhiri
+        </button>
+      </div>
+    </header>
+
+    <!-- ================= NOTIFIKASI PERSISTEN ================= -->
+    <div class="alert" id="storage-alert" role="alert" hidden>
+      <div class="alert__body">
+        <strong class="alert__title">Penyimpanan bermasalah</strong>
+        <p class="alert__text" id="storage-alert-text"></p>
+      </div>
+      <button type="button" class="btn btn--ghost btn--tiny" id="retry-save" hidden>
+        Coba simpan
+      </button>
+    </div>
+
+    <main class="app-main">
+      <!-- ================= FORM (VIEW INPUT) ================= -->
+      <section class="panel" aria-labelledby="form-title">
+        <div class="panel__head">
+          <h2 class="panel__title" id="form-title">Catat Kegiatan</h2>
+          <p class="panel__hint">Data tersimpan otomatis di perangkat ini.</p>
+        </div>
+
+        <form class="form" id="log-form" novalidate>
+          <div class="field">
+            <label class="field__label" for="technicianName">Nama Teknisi</label>
+            <input
+              class="field__control"
+              id="technicianName"
+              name="technicianName"
+              type="text"
+              maxlength="60"
+              autocomplete="name"
+              enterkeyhint="next"
+              placeholder="Contoh: Rizky Pratama"
+              aria-describedby="err-technicianName"
+              required
+            />
+            <p class="field__error" id="err-technicianName" data-error-for="technicianName" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="status">Status Kehadiran</label>
+            <select
+              class="field__control field__control--select"
+              id="status"
+              name="status"
+              aria-describedby="err-status"
+              required
+            >
+              <option value="" disabled selected>Pilih status…</option>
+              <option value="hadir">Hadir</option>
+              <option value="izin">Izin</option>
+              <option value="sakit">Sakit</option>
+              <option value="cuti">Cuti</option>
+              <option value="dinas">Dinas Luar</option>
+            </select>
+            <p class="field__error" id="err-status" data-error-for="status" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <div class="field__row">
+              <label class="field__label" for="jobDesc">Log Pekerjaan</label>
+              <span class="field__counter" id="desc-count">0/280</span>
+            </div>
+            <textarea
+              class="field__control field__control--area"
+              id="jobDesc"
+              name="jobDesc"
+              rows="4"
+              maxlength="280"
+              placeholder="Tuliskan pekerjaan yang dilakukan, lokasi, dan kendala bila ada…"
+              aria-describedby="err-jobDesc"
+              required
+            ></textarea>
+            <p class="field__error" id="err-jobDesc" data-error-for="jobDesc" role="alert"></p>
+          </div>
+
+          <div class="form__actions">
+            <button type="submit" class="btn btn--primary" id="submit-btn">
+              <span class="btn__spinner" aria-hidden="true"></span>
+              <span class="btn__label" id="submit-label">Kirim</span>
+            </button>
+            <p class="form__status" id="draft-status" aria-live="polite">
+              Draf tersimpan otomatis di perangkat ini
+            </p>
+          </div>
+        </form>
+      </section>
+
+      <!-- ================= FEED (VIEW OUTPUT) ================= -->
+      <section class="feed" aria-labelledby="feed-title">
+        <div class="feed__head">
+          <h2 class="feed__title" id="feed-title">
+            Riwayat Kegiatan
+            <span class="badge" id="log-count" aria-label="0 log kegiatan">0</span>
+          </h2>
+          <button type="button" class="btn btn--ghost btn--tiny" id="clear-btn" hidden>
+            Bersihkan
+          </button>
+        </div>
+
+        <!-- Kontainer kosong: kartu log dirender dinamis oleh View -->
+        <div class="feed__list" id="feed-container" aria-live="polite" aria-busy="false"></div>
+
+        <div class="empty" id="empty-state">
+          <span class="empty__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1Z" />
+              <path d="M8 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+              <path d="M8 12h8M8 16h5" />
+            </svg>
+          </span>
+          <p class="empty__title">Belum ada log kegiatan</p>
+          <p class="empty__text">Kirim formulir pertama Anda untuk melihat kartu kegiatan di sini.</p>
+        </div>
+      </section>
+
+      <!-- ================= PANEL UJI KETAHANAN (PROTOTIPE) ================= -->
+      <details class="diagnostics" id="diagnostics">
+        <summary class="diagnostics__summary">Panel Uji Ketahanan</summary>
+        <p class="diagnostics__hint">
+          Alat bantu QA untuk membuktikan penanganan error. Tidak diperlukan pada pemakaian normal.
+        </p>
+        <div class="diagnostics__actions">
+          <button type="button" class="btn btn--outline btn--tiny" data-simulate="quota">
+            Simulasi kuota penuh
+          </button>
+          <button type="button" class="btn btn--outline btn--tiny" data-simulate="corrupt">
+            Rusak data JSON
+          </button>
+          <button type="button" class="btn btn--outline btn--tiny" data-simulate="race">
+            Simulasi race condition
+          </button>
+        </div>
+      </details>
+    </main>
+
+    <footer class="app-footer">
+      <p>Damara Mobile Tracker &middot; Prototipe MVVM &middot; Vanilla JS</p>
+      <p class="app-footer__muted">Data disimpan lokal di peramban Anda.</p>
+    </footer>
+  </div>
+
+  <!-- Wilayah notifikasi toast berbasis DOM -->
+  <div class="toast-region" id="toast-region" role="status" aria-live="polite"></div>
+</body>
+</html>
